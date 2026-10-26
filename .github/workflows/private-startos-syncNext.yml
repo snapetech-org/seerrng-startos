@@ -1,0 +1,31 @@
+# ng-runner-policy: private-jit-only-v1
+# Adapted from Start9Labs/start-technologies at c5cc5f89eed22b67f522c03ae3ebec029dea9669.
+# Runner selection is maintained locally to enforce private JIT only.
+name: Sync next
+
+on:
+  workflow_call:
+
+concurrency:
+  group: sync-next-${{ github.repository }}-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync next
+    runs-on: ${{ fromJSON(format('{{"group":"ng-shared-main-jit","labels":["self-hosted","linux","x64","ng-shared-main-seerrng-startos","ng-main-run-{0}","gha-{0}-sync"]}}', github.run_id)) }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout services repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Sync the paired next branch
+        uses: Start9Labs/start-technologies/.github/actions/sync-next@c5cc5f89eed22b67f522c03ae3ebec029dea9669
+        with:
+          token: ${{ github.token }}
+          base: ${{ github.ref_name }}
+

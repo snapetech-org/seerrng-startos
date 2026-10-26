@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   tag:
-    uses: Start9Labs/start-technologies/.github/workflows/tagAndRelease.yml@master
+    uses: ./.github/workflows/private-startos-tagAndRelease.yml
     with:
       REFERENCE_REGISTRY: ${{ vars.REFERENCE_REGISTRY }}
       RELEASE_REGISTRY: ${{ vars.RELEASE_REGISTRY }}

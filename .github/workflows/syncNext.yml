@@ -10,7 +10,7 @@ on:
 
 jobs:
   sync:
-    uses: Start9Labs/start-technologies/.github/workflows/syncNext.yml@master
+    uses: ./.github/workflows/private-startos-syncNext.yml
     permissions:
       contents: write
       pull-requests: write
