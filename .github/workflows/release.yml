@@ -1,6 +1,6 @@
 name: Release
 
-run-name: ${{ format('action:release:pool:private:tag:{0}', inputs.release_tag) }}
+run-name: ${{ format('action:{0}:pool:{1}:tag:{2}', inputs.action, inputs.runner_pool, inputs.release_tag) }}
 
 on:
   workflow_dispatch:

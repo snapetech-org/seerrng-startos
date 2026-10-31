@@ -1,7 +1,19 @@
 name: Build
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('action:{0}:pool:{1}', inputs.action, inputs.runner_pool) || format('action:build:pool:private') }}
 
 on:
   workflow_dispatch:
+    inputs:
+      action:
+        description: Select the private JIT action
+        required: true
+        type: choice
+        options: [build]
+      runner_pool:
+        description: Required private JIT runner pool
+        required: true
+        type: choice
+        options: [private]
   pull_request:
     paths-ignore: ['*.md']
     branches: ['main']
@@ -12,6 +24,12 @@ concurrency:
 
 jobs:
   build:
-    if: github.event.pull_request.draft == false
+    if: >-
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.draft == false) ||
+      (github.event_name == 'workflow_dispatch' &&
+       github.ref == 'refs/heads/main' &&
+       inputs.action == 'build' && inputs.runner_pool == 'private')
     uses: ./.github/workflows/private-startos-build.yml
     # No DEV_KEY — a PR build doesn't publish, so it doesn't need the signing key.
