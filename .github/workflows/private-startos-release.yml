@@ -7,9 +7,9 @@ on:
   workflow_call:
     inputs:
       TAG:
-        description: 'Release tag (defaults to github.ref_name for tag-triggered runs)'
+        description: 'Existing release tag selected by the trusted default-branch dispatcher'
+        required: true
         type: string
-        default: ''
       FREE_DISK_SPACE:
         description: 'Free up disk space before building'
         type: boolean
@@ -52,6 +52,18 @@ jobs:
         with:
           ref: ${{ inputs.TAG || github.ref_name }}
           submodules: recursive
+
+
+      - name: Verify selected release tag is on the default branch
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.TAG }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[A-Za-z0-9][A-Za-z0-9._-]*$ ]]
+          git fetch --no-tags origin main
+          tag_commit="$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+          git merge-base --is-ancestor "$tag_commit" origin/main
 
       # `make print-TARGETS` parses the Makefile, whose `include
       # node_modules/@start9labs/start-sdk/s9pk.mk` (SDK 2.0+) only exists after
