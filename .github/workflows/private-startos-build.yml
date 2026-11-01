@@ -59,8 +59,8 @@ jobs:
           echo "matrix=${MATRIX}" >> "$GITHUB_OUTPUT"
         shell: bash
 
-  # Fan out: one runner per make-target. arm targets build natively on
-  # GitHub's arm64 runner — both the bare arch (`arm`) and per-variant leaves
+  # Fan out: one runner per make-target. arm targets use the native private
+  # Linux ARM64 JIT runner — both the bare arch (`arm`) and per-variant leaves
   # (`<variant>-arm`). x86 and riscv stay on x86 (riscv still emulates under
   # QEMU). Empty target (fallback path) -> x86.
   BuildMatrix:

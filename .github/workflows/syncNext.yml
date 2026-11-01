@@ -1,21 +1,20 @@
+# ng-runner-policy: private-jit-only-v1
 name: Sync next
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('action:{0}:pool:{1}', inputs.action, inputs.runner_pool) || format('action:sync:pool:private') }}
+run-name: >-
+  ${{ format('action:{0}:pool:{1}', inputs.action_tag, inputs.runner_pool_tag) }}
 
-# Carries every change that lands on the base branch onto the paired `next`
-# iteration branch, so `next` never drifts behind what has already shipped.
-# `next` is created on the first run if the repo does not have one yet.
+# Manually carry the base branch onto the paired `next` iteration branch when
+# an explicit synchronization is needed.
 on:
-  push:
-    branches: ['master']
   workflow_dispatch:
     inputs:
-      action:
-        description: Select the private JIT action
+      action_tag:
+        description: Required private JIT action tag
         required: true
         type: choice
         options: [sync]
-      runner_pool:
-        description: Required private JIT runner pool
+      runner_pool_tag:
+        description: Required private JIT runner pool tag
         required: true
         type: choice
         options: [private]
@@ -23,9 +22,9 @@ on:
 jobs:
   sync:
     if: >-
-      github.event_name != 'workflow_dispatch' ||
-      (github.ref == 'refs/heads/main' &&
-       inputs.action == 'sync' && inputs.runner_pool == 'private')
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.action_tag == 'sync' && inputs.runner_pool_tag == 'private'
     uses: ./.github/workflows/private-startos-syncNext.yml
     permissions:
       contents: write

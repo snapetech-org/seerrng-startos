@@ -6,6 +6,10 @@ name: Tag and Release
 on:
   workflow_call:
     inputs:
+      TAG:
+        description: Existing v* tag on the default branch to build and publish
+        type: string
+        required: true
       REFERENCE_REGISTRY:
         description: 'Registry where published versions are permanent (used to check if a version is already taken)'
         type: string
@@ -35,13 +39,27 @@ jobs:
   Tag:
     runs-on: ${{ fromJSON(format('{{"group":"ng-shared-main-jit","labels":["self-hosted","linux","x64","ng-shared-main-seerrng-startos","ng-main-run-{0}","gha-{0}-tag"]}}', github.run_id)) }}
     permissions:
-      contents: write
+      contents: read
     outputs:
       tag: ${{ steps.extract.outputs.tag }}
       skip: ${{ steps.check.outputs.skip }}
     steps:
-      - name: Checkout repository
+      - name: Checkout selected release tag
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.TAG }}
+          fetch-depth: 0
+
+      - name: Verify selected tag is on the default branch
+        env:
+          RELEASE_TAG: ${{ inputs.TAG }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[A-Za-z0-9][A-Za-z0-9._-]*$ ]]
+          git fetch --no-tags origin main
+          tag_commit="$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+          git merge-base --is-ancestor "$tag_commit" origin/main
+        shell: bash
 
       - name: Install start-cli
         uses: Start9Labs/start-technologies/.github/actions/install-start-cli@c5cc5f89eed22b67f522c03ae3ebec029dea9669
@@ -49,6 +67,18 @@ jobs:
       - name: Extract package ID and version
         id: extract
         uses: Start9Labs/start-technologies/.github/actions/extract-version@c5cc5f89eed22b67f522c03ae3ebec029dea9669
+
+      - name: Verify selected tag matches the package version
+        env:
+          SELECTED_TAG: ${{ inputs.TAG }}
+          PACKAGE_TAG: ${{ steps.extract.outputs.tag }}
+        run: |
+          set -euo pipefail
+          [[ "$SELECTED_TAG" == "$PACKAGE_TAG" ]] || {
+            echo "::error::Selected release tag does not match the package version at that tag"
+            exit 1
+          }
+        shell: bash
 
       - name: Check production registry
         id: check
@@ -85,20 +115,6 @@ jobs:
           fi
         shell: bash
 
-      - name: Force-push release tag
-        if: steps.check.outputs.skip == 'false'
-        # Force-push the tag at the current commit. We deliberately do NOT
-        # delete the existing GitHub release here: if the downstream build
-        # fails (e.g. transient infra issue), the previous release stays
-        # intact and the registry's download URLs keep resolving. On a
-        # successful build, softprops/action-gh-release@v3 updates the
-        # release in place and replaces same-named assets.
-        run: |
-          TAG="${{ steps.extract.outputs.tag }}"
-          echo "Force-pushing tag ${TAG} at $(git rev-parse HEAD)..."
-          git tag -f "${TAG}"
-          git push origin -f "refs/tags/${TAG}"
-        shell: bash
 
   Release:
     needs: Tag

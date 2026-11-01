@@ -98,7 +98,7 @@ jobs:
   # internally sets VARIANT and dispatches to its arches).
   BuildMatrix:
     needs: DiscoverMatrix
-    # arm targets build natively on GitHub's arm64 runner — both the bare arch
+    # arm targets build natively on the private Linux ARM64 JIT runner — both the bare arch
     # (`arm`) and per-variant leaves (`<variant>-arm`, e.g. generic-arm). x86 and
     # riscv targets stay on x86 (riscv still emulates under QEMU). Empty target
     # (fallback path) -> x86.
