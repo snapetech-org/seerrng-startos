@@ -33,6 +33,11 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Set up Node.js 22 for dependency discovery
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
       # `make print-TARGETS` parses the Makefile, whose `include
       # node_modules/@start9labs/start-sdk/s9pk.mk` (SDK 2.0+) only exists after
       # a dependency install, and whose SDK 3 version runs `start-cli` while

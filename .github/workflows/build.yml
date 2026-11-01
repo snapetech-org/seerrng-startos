@@ -16,9 +16,6 @@ on:
         required: true
         type: choice
         options: [private]
-  pull_request:
-    paths-ignore: ['*.md']
-    branches: ['main']
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -27,11 +24,8 @@ concurrency:
 jobs:
   build:
     if: >-
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.head.repo.full_name == github.repository &&
-       github.event.pull_request.draft == false) ||
-      (github.event_name == 'workflow_dispatch' &&
-       github.ref == 'refs/heads/main' &&
-       inputs.action_tag == 'build' && inputs.runner_pool_tag == 'private')
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.action_tag == 'build' && inputs.runner_pool_tag == 'private'
     uses: ./.github/workflows/private-startos-build.yml
-    # No DEV_KEY — a PR build doesn't publish, so it doesn't need the signing key.
+    # This build-only dispatch does not publish, so no signing key is required.
